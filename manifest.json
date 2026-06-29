@@ -2,7 +2,8 @@
   "name": "Paisa — Spend Tracker",
   "short_name": "Paisa",
   "description": "Personal spend tracker with Google Sheets sync",
-  "start_url": "/index.html",
+  "start_url": "/Paisa/index.html",
+  "scope": "/Paisa/"
   "display": "standalone",
   "background_color": "#0a0a0b",
   "theme_color": "#0a0a0b",
