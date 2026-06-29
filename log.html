@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#0a0a0b"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Log Expense"/>
+<title>Log Expense</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#0a0a0b; --card:#18181b; --border:#27272a; --text:#fafafa; --muted:#71717a;
+  --accent:#6366f1; --accent-dim:rgba(99,102,241,0.12); --accent-border:rgba(99,102,241,0.3);
+  --green:#22c55e; --green-dim:rgba(34,197,94,0.08); --green-border:rgba(34,197,94,0.25);
+  --red:#ef4444; --red-dim:rgba(239,68,68,0.08); --red-border:rgba(239,68,68,0.25);
+  --mono:'Space Mono',monospace; --sans:'Space Grotesk',sans-serif;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+body {
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:calc(var(--safe-top) + 48px) 24px calc(var(--safe-bottom) + 24px);
+}
+
+/* LOGO ROW */
+.top-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  width:100%;
+  max-width:420px;
+  margin-bottom:32px;
+}
+
+.logo {
+  font-family:var(--mono);
+  font-size:16px;
+  font-weight:700;
+  letter-spacing:-.02em;
+}
+.logo span{color:var(--accent)}
+
+.open-app {
+  font-size:12px;
+  color:var(--muted);
+  text-decoration:none;
+  font-family:var(--mono);
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:5px 10px;
+  transition:all .15s;
+}
+.open-app:hover{color:var(--accent);border-color:var(--accent)}
+
+/* MAIN CARD */
+.card {
+  width:100%;
+  max-width:420px;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:16px;
+}
+
+.card-label {
+  font-family:var(--mono);
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--muted);
+  margin-bottom:14px;
+}
+
+/* INPUT */
+.input-field {
+  width:100%;
+  background:none;
+  border:none;
+  outline:none;
+  font-family:var(--sans);
+  font-size:22px;
+  font-weight:600;
+  color:var(--text);
+  line-height:1.4;
+  caret-color:var(--accent);
+}
+.input-field::placeholder{color:#3f3f46;font-weight:400;font-size:18px}
+
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* PARSED PREVIEW */
+.preview {
+  display:none;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-bottom:4px;
+}
+.preview.show{display:flex}
+.chip {
+  background:var(--accent-dim);
+  border:1px solid var(--accent-border);
+  border-radius:6px;
+  padding:4px 10px;
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--text);
+}
+.chip.amount{font-size:14px;font-weight:700;color:var(--accent)}
+
+/* EXAMPLES */
+.examples {
+  width:100%;
+  max-width:420px;
+  margin-bottom:20px;
+}
+.ex-label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px}
+.ex-item {
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px 13px;
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:6px;
+  cursor:pointer;
+  font-family:var(--mono);
+  transition:all .15s;
+}
+.ex-item:hover{color:var(--text);border-color:var(--accent)}
+
+/* LOG BUTTON */
+.log-btn {
+  width:100%;
+  max-width:420px;
+  background:var(--accent);
+  color:white;
+  border:none;
+  border-radius:13px;
+  padding:16px;
+  font-family:var(--sans);
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  transition:opacity .15s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  letter-spacing:-.01em;
+}
+.log-btn:active{opacity:.85}
+.log-btn:disabled{opacity:.35;cursor:not-allowed}
+
+.spinner {
+  width:16px;height:16px;
+  border:2px solid rgba(255,255,255,0.3);
+  border-top-color:white;
+  border-radius:50%;
+  animation:spin .6s linear infinite;
+  display:none;
+}
+.log-btn.loading .spinner{display:block}
+.log-btn.loading .btn-text{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SUCCESS STATE */
+.success-screen {
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  min-height:60vh;
+  width:100%;
+}
+.success-screen.show{display:flex}
+.success-icon{font-size:56px;margin-bottom:16px;animation:pop .3s ease}
+@keyframes pop{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
+.success-amount{font-family:var(--mono);font-size:32px;font-weight:700;color:var(--green);letter-spacing:-.03em;margin-bottom:6px}
+.success-desc{font-size:14px;color:var(--muted);margin-bottom:4px}
+.success-bucket{font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:32px}
+.log-another {
+  background:none;border:1px solid var(--border);color:var(--text);
+  border-radius:10px;padding:12px 24px;font-family:var(--sans);font-size:14px;
+  font-weight:600;cursor:pointer;transition:all .15s;
+}
+.log-another:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ERROR */
+.error-msg{
+  width:100%;max-width:420px;
+  background:var(--red-dim);border:1px solid var(--red-border);
+  border-radius:10px;padding:11px 14px;font-size:13px;color:var(--red);
+  margin-bottom:12px;display:none;font-family:var(--mono);
+}
+.error-msg.show{display:block}
+
+/* NO URL */
+.no-url-card {
+  width:100%;max-width:420px;
+  background:rgba(245,158,11,0.08);
+  border:1px solid rgba(245,158,11,0.25);
+  border-radius:13px;padding:20px;
+}
+.no-url-card h4{font-size:14px;font-weight:600;color:#f59e0b;margin-bottom:8px}
+.no-url-card p{font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:12px}
+.url-input{
+  width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12px;
+  outline:none;margin-bottom:10px;transition:border-color .15s;
+}
+.url-input:focus{border-color:var(--accent)}
+.url-save-btn{
+  width:100%;background:var(--accent);color:white;border:none;border-radius:9px;
+  padding:11px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div class="top-row">
+  <div class="logo">pai<span>₹</span>a · quick log</div>
+  <a class="open-app" href="https://specialpics8-mac.github.io/Paisa/">Open App →</a>
+</div>
+
+<!-- NO URL STATE -->
+<div class="no-url-card" id="noUrlCard" style="display:none">
+  <h4>⚡ Connect Google Sheets first</h4>
+  <p>Paste your Google Apps Script Web App URL to start logging expenses.</p>
+  <input class="url-input" id="urlInput" placeholder="https://script.google.com/macros/s/…/exec" type="url"/>
+  <button class="url-save-btn" onclick="saveUrl()">Connect →</button>
+</div>
+
+<!-- MAIN LOG UI -->
+<div id="mainUI">
+  <div class="card">
+    <div class="card-label">What did you spend?</div>
+    <textarea
+      class="input-field"
+      id="inputField"
+      placeholder="300 Swiggy groceries split 2 HDFC"
+      rows="2"
+      autofocus
+    ></textarea>
+    <div class="divider"></div>
+    <div class="preview" id="preview"></div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <button class="log-btn" id="logBtn" onclick="logExpense()">
+    <div class="spinner"></div>
+    <span class="btn-text">Log Expense</span>
+  </button>
+
+  <div style="height:20px"></div>
+
+  <div class="examples">
+    <div class="ex-label">Tap to fill</div>
+    <div class="ex-item" onclick="fillExample(this)">300 Swiggy groceries split 2 HDFC</div>
+    <div class="ex-item" onclick="fillExample(this)">1200 Zomato dinner Axis</div>
+    <div class="ex-item" onclick="fillExample(this)">499 Netflix subscriptions</div>
+    <div class="ex-item" onclick="fillExample(this)">800 Uber transport</div>
+  </div>
+</div>
+
+<!-- SUCCESS STATE -->
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">✅</div>
+  <div class="success-amount" id="sAmount"></div>
+  <div class="success-desc" id="sDesc"></div>
+  <div class="success-bucket" id="sBucket"></div>
+  <button class="log-another" onclick="resetForm()">+ Log Another</button>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────
+let SCRIPT_URL = localStorage.getItem('paisa_script_url') || '';
+
+const BM = {
+  food:          {icon:'🍔', label:'Food & Dining'},
+  groceries:     {icon:'🛒', label:'Groceries'},
+  transport:     {icon:'🚗', label:'Transport'},
+  rent:          {icon:'🏠', label:'Rent & Home'},
+  shopping:      {icon:'🛍️', label:'Shopping'},
+  health:        {icon:'💊', label:'Health'},
+  entertainment: {icon:'🎬', label:'Entertainment'},
+  subscriptions: {icon:'📦', label:'Subscriptions'},
+  investment:    {icon:'📈', label:'Investments'},
+  other:         {icon:'📋', label:'Other'},
+};
+
+// ── INIT ──────────────────────────────────────────────────
+function init() {
+  if (!SCRIPT_URL) {
+    document.getElementById('noUrlCard').style.display = '';
+    document.getElementById('mainUI').style.display = 'none';
+  } else {
+    document.getElementById('noUrlCard').style.display = 'none';
+    document.getElementById('mainUI').style.display = '';
+    setTimeout(() => document.getElementById('inputField').focus(), 100);
+  }
+}
+
+function saveUrl() {
+  const val = document.getElementById('urlInput').value.trim();
+  if (!val.startsWith('https://')) { alert('Paste the full https:// URL'); return; }
+  SCRIPT_URL = val;
+  localStorage.setItem('paisa_script_url', SCRIPT_URL);
+  init();
+}
+
+// ── LOCAL PARSER ──────────────────────────────────────────
+function parseLocal(raw) {
+  const t = raw.toLowerCase().trim();
+  const amtMatch = t.match(/(\d+(?:\.\d+)?)\s*k\b/) || t.match(/(\d+(?:\.\d+)?)/);
+  if (!amtMatch) return null;
+  const amount = parseFloat(amtMatch[1]) * (t.match(/\d+(?:\.\d+)?k\b/) ? 1000 : 1);
+  const splitMatch = t.match(/split\s+(\d+)|split\s+in\s+(\d+)/);
+  const split = splitMatch ? parseInt(splitMatch[1]||splitMatch[2]) : null;
+  const myAmount = split ? Math.round(amount / split) : amount;
+  const cardMap = {hdfc:'HDFC',axis:'Axis',icici:'ICICI',sbi:'SBI',kotak:'Kotak',amex:'Amex',rupay:'RuPay',indusind:'IndusInd',citi:'Citi'};
+  let card = null;
+  for (const [k,v] of Object.entries(cardMap)) { if (t.includes(k)) { card = v; break; } }
+  const rules = [
+    {bucket:'groceries',icon:'🛒',kw:['instamart','bigbasket','blinkit','zepto','grocery','groceries','kirana','vegetables','dmart']},
+    {bucket:'food',icon:'🍔',kw:['zomato','swiggy','food','lunch','dinner','breakfast','cafe','restaurant','coffee','starbucks','mcdonalds','dominos','kfc']},
+    {bucket:'transport',icon:'🚗',kw:['uber','ola','cab','auto','metro','petrol','fuel','rapido','irctc','flight']},
+    {bucket:'rent',icon:'🏠',kw:['rent','maintenance','electricity','water','gas','wifi','internet','broadband']},
+    {bucket:'subscriptions',icon:'📦',kw:['netflix','spotify','prime','hotstar','zee5','youtube','apple','icloud','notion','subscription']},
+    {bucket:'health',icon:'💊',kw:['medicine','pharmacy','doctor','hospital','gym','fitness','cult','apollo','1mg']},
+    {bucket:'shopping',icon:'🛍️',kw:['amazon','flipkart','myntra','ajio','shopping','clothes','shoes','meesho','nykaa']},
+    {bucket:'entertainment',icon:'🎬',kw:['movie','pvr','inox','bookmyshow','concert','game']},
+    {bucket:'investment',icon:'📈',kw:['sip','mutual fund','mf','stocks','zerodha','groww','nps','ppf','fd','investment']},
+  ];
+  let bucket='other', icon='📋';
+  for (const rule of rules) { if (rule.kw.some(k=>t.includes(k))) { bucket=rule.bucket; icon=rule.icon; break; } }
+  let desc = raw.replace(/\d+(?:\.\d+)?k?\b/i,'').replace(/split\s+in\s+\d+|split\s+\d+/i,'').replace(/\b(hdfc|axis|icici|sbi|kotak|amex|rupay|indusind|citi)\b/gi,'').replace(/\b(card|credit|debit)\b/gi,'').replace(/\s+/g,' ').trim();
+  if (!desc) desc = raw.trim();
+  desc = desc.replace(/\b\w/g, c => c.toUpperCase());
+  return { amount, myAmount, description: desc, bucket, card, split, icon };
+}
+
+// ── PREVIEW ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const field = document.getElementById('inputField');
+  if (field) {
+    field.addEventListener('input', () => {
+      const raw = field.value.trim();
+      const preview = document.getElementById('preview');
+      if (!raw) { preview.classList.remove('show'); return; }
+      const p = parseLocal(raw);
+      if (!p) { preview.classList.remove('show'); return; }
+      preview.classList.add('show');
+      preview.innerHTML = `
+        <span class="chip amount">₹${p.myAmount.toLocaleString('en-IN')}</span>
+        <span class="chip">${p.icon} ${BM[p.bucket].label}</span>
+        ${p.card ? `<span class="chip">💳 ${p.card}</span>` : ''}
+        ${p.split ? `<span class="chip">👥 split ${p.split}</span>` : ''}
+      `;
+    });
+    field.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); logExpense(); }
+    });
+  }
+});
+
+// ── LOG ───────────────────────────────────────────────────
+async function logExpense() {
+  const raw = document.getElementById('inputField').value.trim();
+  if (!raw) return;
+
+  const p = parseLocal(raw);
+  if (!p) { showError('Start with the amount — e.g. "300 Swiggy groceries"'); return; }
+
+  const btn = document.getElementById('logBtn');
+  btn.classList.add('loading'); btn.disabled = true;
+  hideError();
+
+  const txn = {
+    id:          Date.now(),
+    date:        new Date().toISOString(),
+    raw,
+    amount:      p.amount,
+    myAmount:    p.myAmount,
+    description: p.description,
+    bucket:      p.bucket,
+    card:        p.card || '',
+    split:       p.split || '',
+    icon:        p.icon,
+  };
+
+  // Save to localStorage (same store as main app)
+  try {
+    const existing = JSON.parse(localStorage.getItem('paisa_txns') || '[]');
+    existing.unshift(txn);
+    localStorage.setItem('paisa_txns', JSON.stringify(existing));
+  } catch(e) {}
+
+  // Sync to Google Sheet
+  try {
+    const url = SCRIPT_URL + '?' + new URLSearchParams({ action:'log', ...txn }).toString();
+    await fetch(url);
+  } catch(e) {
+    // Queue for later sync — save to queue
+    try {
+      const q = JSON.parse(localStorage.getItem('paisa_queue') || '[]');
+      q.push({ action:'log', ...txn });
+      localStorage.setItem('paisa_queue', JSON.stringify(q));
+    } catch(e2) {}
+  }
+
+  btn.classList.remove('loading'); btn.disabled = false;
+  showSuccess(txn, p);
+}
+
+// ── SUCCESS ───────────────────────────────────────────────
+function showSuccess(txn, p) {
+  document.getElementById('mainUI').style.display = 'none';
+  const s = document.getElementById('successScreen');
+  s.classList.add('show');
+  document.getElementById('sAmount').textContent = `₹${txn.myAmount.toLocaleString('en-IN')}`;
+  document.getElementById('sDesc').textContent = txn.description;
+  document.getElementById('sBucket').textContent = `${p.icon} ${BM[p.bucket].label}${p.card ? ' · ' + p.card : ''}${p.split ? ' · split ' + p.split : ''}`;
+
+  // Auto close after 2.5s
+  setTimeout(() => {
+    if (window.history.length > 1) window.close();
+    else resetForm();
+  }, 2500);
+}
+
+function resetForm() {
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('mainUI').style.display = '';
+  document.getElementById('inputField').value = '';
+  document.getElementById('preview').classList.remove('show');
+  setTimeout(() => document.getElementById('inputField').focus(), 100);
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function fillExample(el) {
+  document.getElementById('inputField').value = el.textContent;
+  document.getElementById('inputField').dispatchEvent(new Event('input'));
+  document.getElementById('inputField').focus();
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg; el.classList.add('show');
+}
+
+function hideError() {
+  document.getElementById('errorMsg').classList.remove('show');
+}
+
+init();
+</script>
+</body>
+</html>
